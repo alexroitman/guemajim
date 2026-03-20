@@ -1,0 +1,145 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id          String    @id @default(cuid())
+  email       String    @unique
+  password    String
+  name        String
+  dni         String    @unique
+  communityId String
+  community   Community @relation(fields: [communityId], references: [id])
+  phone       String?
+  role        Role      @default(USER)
+  status      Status    @default(PENDING)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  gemachim  Gemach[]
+  items     Item[]
+  requests  Request[]  @relation("requester")
+  favorites Favorite[]
+}
+
+model Community {
+  id       String  @id @default(cuid())
+  name     String  @unique
+  isActive Boolean @default(true)
+
+  users    User[]
+  gemachim GemachCommunity[]
+  items    ItemCommunity[]
+}
+
+model Gemach {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name           String
+  category       String
+  description    String
+  contact        String
+  isActive       Boolean  @default(true)
+  allCommunities Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  communities GemachCommunity[]
+  favorites   Favorite[]
+}
+
+model GemachCommunity {
+  gemachId    String
+  communityId String
+  gemach      Gemach    @relation(fields: [gemachId], references: [id], onDelete: Cascade)
+  community   Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+
+  @@id([gemachId, communityId])
+}
+
+model Item {
+  id             String     @id @default(cuid())
+  userId         String
+  user           User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title          String
+  description    String
+  category       String
+  type           ItemType
+  status         ItemStatus @default(AVAILABLE)
+  imageUrl       String?
+  allCommunities Boolean    @default(true)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  communities ItemCommunity[]
+  requests    Request[]
+  favorites   Favorite[]
+}
+
+model ItemCommunity {
+  itemId      String
+  communityId String
+  item        Item      @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  community   Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+
+  @@id([itemId, communityId])
+}
+
+model Request {
+  id          String        @id @default(cuid())
+  requesterId String
+  requester   User          @relation("requester", fields: [requesterId], references: [id], onDelete: Cascade)
+  itemId      String
+  item        Item          @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  message     String?
+  status      RequestStatus @default(PENDING)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model Favorite {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gemachId  String?
+  gemach    Gemach?  @relation(fields: [gemachId], references: [id], onDelete: Cascade)
+  itemId    String?
+  item      Item?    @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, gemachId])
+  @@unique([userId, itemId])
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum Status {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ItemType {
+  LEND
+  GIVE
+}
+
+enum ItemStatus {
+  AVAILABLE
+  REQUESTED
+  TAKEN
+}
+
+enum RequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}

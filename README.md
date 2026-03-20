@@ -1,36 +1,79 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# guemajim.com
 
-## Getting Started
+Plataforma comunitaria de guemajim — red de préstamos y donaciones.
 
-First, run the development server:
+## Stack
+
+- **Next.js 15** (App Router) + TypeScript
+- **Prisma 7** + PostgreSQL (adapter-pg)
+- **NextAuth.js v5** (Auth.js)
+- **Radix UI** + Tailwind CSS (mobile-first, paleta cálida)
+- **Resend** para emails automáticos
+- Deploy: **Vercel** + **Supabase**
+
+## Primeros pasos
+
+### 1. Variables de entorno
+
+Editar `.env`:
+
+```env
+DATABASE_URL="postgresql://usuario:password@host:5432/guemajim"
+AUTH_SECRET="..."       # openssl rand -base64 32
+ADMIN_EMAIL="admin@guemajim.com"
+ADMIN_PASSWORD="MiPasswordSegura!"
+RESEND_API_KEY="re_..."
+NEXTAUTH_URL="http://localhost:3000"
+```
+
+### 2. Base de datos
+
+```bash
+# Crear tablas
+npx prisma migrate dev --name init
+
+# Seed inicial (comunidades + admin)
+npm run db:seed
+```
+
+### 3. Desarrollo
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# → http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Login admin inicial
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+Email:    admin@guemajim.com   (o ADMIN_EMAIL)
+Password: CambiarEstaPassword123!   (o ADMIN_PASSWORD)
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Flujo de la plataforma
 
-## Learn More
+1. Usuario se registra con DNI + comunidad → estado **PENDING**
+2. Admin en `/admin` → aprueba o rechaza (email automático)
+3. Usuario aprobado puede:
+   - Publicar y explorar **guemajim**
+   - Publicar artículos para **prestar** o **regalar**
+   - **Solicitar** artículos (email al dueño)
+   - **Favoritos**
+   - Filtrar contenido por comunidad
 
-To learn more about Next.js, take a look at the following resources:
+## Deploy
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Crear proyecto en **Supabase** → copiar URL a `DATABASE_URL`
+2. Agregar variables en **Vercel**
+3. `git push` → Vercel deploya automáticamente
+4. `npx prisma migrate deploy && npm run db:seed` en producción
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Comandos
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm run dev           # Desarrollo
+npm run build         # Build producción
+npm run db:migrate    # Nueva migración
+npm run db:seed       # Seed inicial
+npm run db:studio     # Prisma Studio
+```
