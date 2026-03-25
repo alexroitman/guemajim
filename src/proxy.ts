@@ -1,18 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { jwtVerify } from "jose";
+import { getToken } from "@auth/core/jwt";
 
 async function getSession(req: NextRequest) {
-  const secret = new TextEncoder().encode(process.env.AUTH_SECRET!);
-  // NextAuth v5 usa __Secure- prefix en HTTPS, authjs. en HTTP
-  const cookieName =
-    req.url.startsWith("https")
-      ? "__Secure-authjs.session-token"
-      : "authjs.session-token";
-  const token = req.cookies.get(cookieName)?.value;
-  if (!token) return null;
   try {
-    const { payload } = await jwtVerify(token, secret);
-    return payload as { role?: string; status?: string };
+    const secureCookie = req.url.startsWith("https");
+    const token = await getToken({
+      req,
+      secret: process.env.AUTH_SECRET!,
+      secureCookie,
+    });
+    return token as { role?: string; status?: string } | null;
   } catch {
     return null;
   }
