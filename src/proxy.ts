@@ -7,13 +7,19 @@ async function getSession(req: NextRequest) {
     // por lo que req.url empieza con http:// aunque el cliente use HTTPS.
     // Forzamos secureCookie=true en producción para usar el prefijo __Secure-.
     const secureCookie = process.env.NODE_ENV === "production";
+    const cookie = req.headers.get("cookie") ?? "";
+    const hasCookie = cookie.includes("authjs.session-token");
+    const secretPresent = !!process.env.AUTH_SECRET;
+    console.log("[proxy] secureCookie:", secureCookie, "hasCookie:", hasCookie, "secretPresent:", secretPresent, "url:", req.url.slice(0, 30));
     const token = await getToken({
       req,
       secret: process.env.AUTH_SECRET!,
       secureCookie,
     });
+    console.log("[proxy] token:", token ? "found" : "null");
     return token as { role?: string; status?: string } | null;
-  } catch {
+  } catch (e) {
+    console.log("[proxy] error:", String(e));
     return null;
   }
 }
