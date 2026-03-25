@@ -1,31 +1,17 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getToken } from "@auth/core/jwt";
+import { NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
 
-async function getSession(req: NextRequest) {
-  try {
-    const secureCookie = process.env.NODE_ENV === "production";
-    const token = await getToken({
-      req,
-      secret: process.env.AUTH_SECRET!,
-      secureCookie,
-    });
-    return token as { role?: string; status?: string } | null;
-  } catch {
-    return null;
-  }
-}
-
-export async function proxy(req: NextRequest) {
+export const proxy = auth(function proxyHandler(req) {
   const { pathname } = req.nextUrl;
+  const session = req.auth;
 
   const isAuthPage = pathname === "/login" || pathname === "/registro";
   const isAdminPage = pathname.startsWith("/admin");
   const isPlatformPage = !isAuthPage && !isAdminPage && pathname !== "/pendiente";
 
-  const session = await getSession(req);
   const isLoggedIn = !!session;
-  const isApproved = session?.status === "APPROVED";
-  const isAdmin = session?.role === "ADMIN";
+  const isApproved = session?.user?.status === "APPROVED";
+  const isAdmin = session?.user?.role === "ADMIN";
 
   if (isAuthPage && isLoggedIn) {
     if (isAdmin) return NextResponse.redirect(new URL("/admin", req.url));
@@ -45,9 +31,7 @@ export async function proxy(req: NextRequest) {
   if (isPlatformPage && isLoggedIn && !isApproved && !isAdmin) {
     return NextResponse.redirect(new URL("/pendiente", req.url));
   }
-
-  return NextResponse.next();
-}
+});
 
 export const config = {
   matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
