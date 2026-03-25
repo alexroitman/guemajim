@@ -3,7 +3,7 @@ import { getToken } from "@auth/core/jwt";
 
 async function getSession(req: NextRequest) {
   try {
-    const secureCookie = req.url.startsWith("https");
+    const secureCookie = process.env.NODE_ENV === "production";
     const token = await getToken({
       req,
       secret: process.env.AUTH_SECRET!,
