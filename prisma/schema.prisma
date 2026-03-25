@@ -17,13 +17,15 @@ model User {
   phone       String?
   role        Role      @default(USER)
   status      Status    @default(PENDING)
+  dniImageUrl String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
-  gemachim  Gemach[]
-  items     Item[]
-  requests  Request[]  @relation("requester")
-  favorites Favorite[]
+  gemachim       Gemach[]
+  items          Item[]
+  requests       Request[]       @relation("requester")
+  favorites      Favorite[]
+  gemachRequests GemachRequest[] @relation("GemachRequests")
 }
 
 model Community {
@@ -51,6 +53,7 @@ model Gemach {
 
   communities GemachCommunity[]
   favorites   Favorite[]
+  requests    GemachRequest[]
 }
 
 model GemachCommunity {
@@ -91,15 +94,29 @@ model ItemCommunity {
 }
 
 model Request {
-  id          String        @id @default(cuid())
-  requesterId String
-  requester   User          @relation("requester", fields: [requesterId], references: [id], onDelete: Cascade)
-  itemId      String
-  item        Item          @relation(fields: [itemId], references: [id], onDelete: Cascade)
-  message     String?
-  status      RequestStatus @default(PENDING)
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  id              String        @id @default(cuid())
+  requesterId     String
+  requester       User          @relation("requester", fields: [requesterId], references: [id], onDelete: Cascade)
+  itemId          String
+  item            Item          @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  message         String?
+  responseMessage String?
+  status          RequestStatus @default(PENDING)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+model GemachRequest {
+  id              String        @id @default(cuid())
+  requesterId     String
+  gemachId        String
+  message         String?
+  responseMessage String?
+  status          RequestStatus @default(PENDING)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  requester       User          @relation("GemachRequests", fields: [requesterId], references: [id])
+  gemach          Gemach        @relation(fields: [gemachId], references: [id])
 }
 
 model Favorite {

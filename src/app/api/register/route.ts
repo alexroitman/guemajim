@@ -5,7 +5,7 @@ import { sendNewRegistrationEmail } from "@/lib/emails";
 
 export async function POST(req: NextRequest) {
   try {
-    const { name, email, password, dni, phone, communityId } = await req.json();
+    const { name, email, password, dni, phone, communityId, dniImageUrl } = await req.json();
 
     if (!name || !email || !password || !dni || !communityId) {
       return NextResponse.json({ error: "Campos requeridos faltantes." }, { status: 400 });
@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
 
     const hashed = await bcrypt.hash(password, 12);
     await prisma.user.create({
-      data: { name, email, password: hashed, dni, phone, communityId },
+      data: { name, email, password: hashed, dni, phone, communityId, dniImageUrl: dniImageUrl || null },
     });
 
     // Notificar a admins

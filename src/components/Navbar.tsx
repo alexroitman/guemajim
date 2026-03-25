@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import {
   Home,
   Heart,
@@ -11,8 +11,10 @@ import {
   User,
   LogOut,
   ShieldCheck,
+  Bell,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useState, useEffect } from "react";
 
 const navItems = [
   { href: "/", label: "Inicio", icon: Home },
@@ -28,6 +30,23 @@ interface NavbarProps {
 
 export function Navbar({ isAdmin }: NavbarProps) {
   const pathname = usePathname();
+  const { data: session } = useSession();
+  const [notifCount, setNotifCount] = useState(0);
+
+  const isApprovedUser =
+    session?.user?.status === "APPROVED" && session?.user?.role !== "ADMIN";
+
+  useEffect(() => {
+    if (!isApprovedUser) return;
+    fetch("/api/notificaciones")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data && typeof data.total === "number") {
+          setNotifCount(data.total);
+        }
+      })
+      .catch(() => {});
+  }, [isApprovedUser]);
 
   return (
     <>
@@ -61,6 +80,25 @@ export function Navbar({ isAdmin }: NavbarProps) {
                 </Link>
               );
             })}
+            {isApprovedUser && (
+              <Link
+                href="/notificaciones"
+                className={cn(
+                  "relative flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-medium transition-colors",
+                  pathname === "/notificaciones"
+                    ? "bg-[var(--secondary)] text-[var(--primary)]"
+                    : "text-[var(--muted-foreground)] hover:bg-[var(--muted)] hover:text-[var(--foreground)]"
+                )}
+              >
+                <Bell className="h-4 w-4" />
+                Notificaciones
+                {notifCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center font-bold">
+                    {notifCount > 9 ? "9+" : notifCount}
+                  </span>
+                )}
+              </Link>
+            )}
             {isAdmin && (
               <Link
                 href="/admin"
@@ -93,15 +131,30 @@ export function Navbar({ isAdmin }: NavbarProps) {
           <span className="text-xl">🕍</span>
           <span className="font-bold text-[var(--primary)]">Guemajim</span>
         </Link>
-        {isAdmin && (
-          <Link
-            href="/admin"
-            className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium bg-[var(--secondary)] text-[var(--primary)]"
-          >
-            <ShieldCheck className="h-3.5 w-3.5" />
-            Admin
-          </Link>
-        )}
+        <div className="flex items-center gap-2">
+          {isApprovedUser && (
+            <Link
+              href="/notificaciones"
+              className="relative flex items-center justify-center rounded-lg p-2 text-[var(--muted-foreground)] hover:bg-[var(--muted)] transition-colors"
+            >
+              <Bell className="h-5 w-5" />
+              {notifCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[9px] rounded-full w-4 h-4 flex items-center justify-center font-bold">
+                  {notifCount > 9 ? "9+" : notifCount}
+                </span>
+              )}
+            </Link>
+          )}
+          {isAdmin && (
+            <Link
+              href="/admin"
+              className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium bg-[var(--secondary)] text-[var(--primary)]"
+            >
+              <ShieldCheck className="h-3.5 w-3.5" />
+              Admin
+            </Link>
+          )}
+        </div>
       </header>
 
       {/* Bottom nav en mobile */}

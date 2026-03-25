@@ -126,6 +126,28 @@ export default function UsuariosPage() {
                   </div>
                 </div>
 
+                {user.dniImageUrl && (
+                  <div className="space-y-1.5">
+                    <p className="text-xs text-[var(--muted-foreground)] font-medium">Foto DNI</p>
+                    <a href={user.dniImageUrl} target="_blank" rel="noopener noreferrer">
+                      {user.dniImageUrl.match(/\.(jpg|jpeg|png|gif|webp)(\?|$)/i) ||
+                       user.dniImageUrl.includes("placeholder") ? (
+                        <img
+                          src={user.dniImageUrl}
+                          alt="DNI"
+                          className="h-20 rounded-lg object-cover border border-[var(--border)] hover:opacity-80 transition-opacity"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = "none";
+                          }}
+                        />
+                      ) : null}
+                      <span className="text-xs text-[var(--primary)] hover:underline block mt-1">
+                        Ver foto del DNI
+                      </span>
+                    </a>
+                  </div>
+                )}
+
                 {user.status === "PENDING" && (
                   <div className="flex gap-2">
                     <Button

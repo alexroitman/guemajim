@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -25,12 +25,26 @@ export default function RegistroPage() {
   const [communityId, setCommunityId] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [dniFile, setDniFile] = useState<File | null>(null);
+  const [dniPreview, setDniPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetch("/api/communities")
       .then((r) => r.json())
       .then((data) => setCommunities(data));
   }, []);
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0] ?? null;
+    setDniFile(file);
+    if (file && file.type.startsWith("image/")) {
+      const url = URL.createObjectURL(file);
+      setDniPreview(url);
+    } else {
+      setDniPreview(null);
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -39,7 +53,29 @@ export default function RegistroPage() {
       setError("Seleccioná tu comunidad.");
       return;
     }
+    if (!dniFile) {
+      setError("Por favor adjuntá una foto de tu DNI.");
+      return;
+    }
     setLoading(true);
+
+    // Upload DNI image first
+    let dniImageUrl: string | null = null;
+    try {
+      const formData = new FormData();
+      formData.append("file", dniFile);
+      const uploadRes = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+      if (uploadRes.ok) {
+        const uploadData = await uploadRes.json();
+        dniImageUrl = uploadData.url;
+      }
+    } catch {
+      // If upload fails, proceed without image — don't block registration
+    }
+
     const form = e.currentTarget;
     const body = {
       name: (form.elements.namedItem("name") as HTMLInputElement).value,
@@ -48,6 +84,7 @@ export default function RegistroPage() {
       dni: (form.elements.namedItem("dni") as HTMLInputElement).value,
       phone: (form.elements.namedItem("phone") as HTMLInputElement).value,
       communityId,
+      dniImageUrl,
     };
 
     const res = await fetch("/api/register", {
@@ -150,6 +187,51 @@ export default function RegistroPage() {
                 minLength={8}
                 required
               />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="dniImage">Foto del DNI</Label>
+              <div
+                className="border-2 border-dashed border-[var(--border)] rounded-xl p-4 cursor-pointer hover:border-[var(--primary)] transition-colors text-center"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {dniPreview ? (
+                  <div className="space-y-2">
+                    <img
+                      src={dniPreview}
+                      alt="Preview DNI"
+                      className="mx-auto max-h-32 rounded-lg object-contain"
+                    />
+                    <p className="text-xs text-[var(--muted-foreground)]">
+                      {dniFile?.name} · Click para cambiar
+                    </p>
+                  </div>
+                ) : dniFile ? (
+                  <div className="space-y-1">
+                    <div className="text-2xl">📄</div>
+                    <p className="text-sm font-medium text-[var(--foreground)]">{dniFile.name}</p>
+                    <p className="text-xs text-[var(--muted-foreground)]">Click para cambiar</p>
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    <div className="text-2xl">📷</div>
+                    <p className="text-sm font-medium text-[var(--foreground)]">
+                      Subí una foto de tu DNI
+                    </p>
+                    <p className="text-xs text-[var(--muted-foreground)]">
+                      Imagen o PDF · Requerido
+                    </p>
+                  </div>
+                )}
+                <input
+                  ref={fileInputRef}
+                  id="dniImage"
+                  type="file"
+                  accept="image/*,application/pdf"
+                  className="hidden"
+                  onChange={handleFileChange}
+                />
+              </div>
             </div>
 
             {error && (
