@@ -1,7 +1,24 @@
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
+"use client";
+
+import { useSession } from "next-auth/react";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 export default function PendientePage() {
+  const { data: session, update } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      const updated = await update();
+      if (updated?.user?.status === "APPROVED") {
+        router.push("/");
+        router.refresh();
+      }
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [update, router]);
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-[var(--background)] px-4">
       <div className="max-w-sm text-center">
@@ -13,9 +30,10 @@ export default function PendientePage() {
           Tu solicitud está siendo revisada por la administración. Te
           notificaremos por email cuando sea aprobada.
         </p>
-        <Link href="/login">
-          <Button variant="outline">Volver al inicio</Button>
-        </Link>
+        <div className="flex items-center justify-center gap-2 text-sm text-[var(--muted-foreground)]">
+          <span className="inline-block w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+          Esperando aprobación...
+        </div>
       </div>
     </div>
   );
