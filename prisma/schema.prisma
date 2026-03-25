@@ -74,7 +74,9 @@ model Item {
   category       String
   type           ItemType
   status         ItemStatus @default(AVAILABLE)
-  imageUrl       String?
+  imageUrls      String[]   @default([])
+  availableFrom  DateTime?
+  availableTo    DateTime?
   allCommunities Boolean    @default(true)
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt

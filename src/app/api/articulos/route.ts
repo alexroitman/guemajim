@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "No autorizado." }, { status: 403 });
   }
 
-  const { title, description, category, type, imageUrl, allCommunities, communityIds } =
+  const { title, description, category, type, imageUrls, availableFrom, availableTo, allCommunities, communityIds } =
     await req.json();
 
   if (!title || !description || !category || !type) {
@@ -64,7 +64,9 @@ export async function POST(req: NextRequest) {
       description,
       category,
       type,
-      imageUrl,
+      imageUrls: imageUrls ?? [],
+      availableFrom: availableFrom ? new Date(availableFrom) : null,
+      availableTo: availableTo ? new Date(availableTo) : null,
       allCommunities: allCommunities !== false,
       communities:
         !allCommunities && communityIds?.length

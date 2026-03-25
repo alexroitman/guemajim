@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ITEM_CATEGORIES } from "@/lib/utils";
-import { ArrowLeft, ArrowRightLeft, Gift } from "lucide-react";
+import { ArrowLeft, ArrowRightLeft, Gift, ImagePlus, X } from "lucide-react";
 import Link from "next/link";
 
 export default function NuevoArticuloPage() {
@@ -24,6 +24,10 @@ export default function NuevoArticuloPage() {
   const [type, setType] = useState<"LEND" | "GIVE">("LEND");
   const [allCommunities, setAllCommunities] = useState(true);
   const [selectedCommunities, setSelectedCommunities] = useState<string[]>([]);
+  const [availableFrom, setAvailableFrom] = useState("");
+  const [availableTo, setAvailableTo] = useState("");
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -31,17 +35,63 @@ export default function NuevoArticuloPage() {
     fetch("/api/communities").then((r) => r.json()).then(setCommunities);
   }, []);
 
+  function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    const combined = [...imageFiles, ...files].slice(0, 5);
+    setImageFiles(combined);
+    const previews = combined.map((f) => URL.createObjectURL(f));
+    setImagePreviews(previews);
+    e.target.value = "";
+  }
+
+  function removeImage(index: number) {
+    setImageFiles((prev) => prev.filter((_, i) => i !== index));
+    setImagePreviews((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  async function uploadImages(): Promise<string[]> {
+    const urls: string[] = [];
+    for (const file of imageFiles) {
+      const form = new FormData();
+      form.append("file", file);
+      const res = await fetch("/api/upload", { method: "POST", body: form });
+      const data = await res.json();
+      if (data.url) urls.push(data.url);
+    }
+    return urls;
+  }
+
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
     if (!category) { setError("Seleccioná una categoría."); return; }
+    if (type === "LEND" && availableFrom && availableTo && availableFrom > availableTo) {
+      setError("La fecha de inicio no puede ser posterior a la fecha de fin.");
+      return;
+    }
     setLoading(true);
     const form = e.currentTarget;
+
+    let imageUrls: string[] = [];
+    if (imageFiles.length > 0) {
+      try {
+        imageUrls = await uploadImages();
+      } catch {
+        setError("Error al subir las imágenes.");
+        setLoading(false);
+        return;
+      }
+    }
+
     const body = {
       title: (form.elements.namedItem("title") as HTMLInputElement).value,
       description: (form.elements.namedItem("description") as HTMLTextAreaElement).value,
       category,
       type,
+      imageUrls,
+      availableFrom: type === "LEND" && availableFrom ? availableFrom : undefined,
+      availableTo: type === "LEND" && availableTo ? availableTo : undefined,
       allCommunities,
       communityIds: allCommunities ? [] : selectedCommunities,
     };
@@ -133,6 +183,66 @@ export default function NuevoArticuloPage() {
               rows={3}
               required
             />
+          </div>
+
+          {/* Fechas disponibilidad (solo LEND) */}
+          {type === "LEND" && (
+            <div className="space-y-2">
+              <Label>Disponibilidad (opcional)</Label>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <span className="text-xs text-[var(--muted-foreground)]">Desde</span>
+                  <Input
+                    type="date"
+                    value={availableFrom}
+                    onChange={(e) => setAvailableFrom(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <span className="text-xs text-[var(--muted-foreground)]">Hasta</span>
+                  <Input
+                    type="date"
+                    value={availableTo}
+                    onChange={(e) => setAvailableTo(e.target.value)}
+                    min={availableFrom || undefined}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Fotos */}
+          <div className="space-y-2">
+            <Label>Fotos (opcional, hasta 5)</Label>
+            {imagePreviews.length > 0 && (
+              <div className="grid grid-cols-3 gap-2">
+                {imagePreviews.map((src, i) => (
+                  <div key={i} className="relative aspect-square rounded-lg overflow-hidden bg-[var(--muted)]">
+                    <img src={src} alt="" className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => removeImage(i)}
+                      className="absolute top-1 right-1 bg-black/60 rounded-full p-0.5 text-white"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+                {imagePreviews.length < 5 && (
+                  <label className="aspect-square rounded-lg border-2 border-dashed border-[var(--border)] flex items-center justify-center cursor-pointer hover:bg-[var(--muted)] transition-colors">
+                    <ImagePlus className="h-5 w-5 text-[var(--muted-foreground)]" />
+                    <input type="file" accept="image/*" multiple className="hidden" onChange={handleImageChange} />
+                  </label>
+                )}
+              </div>
+            )}
+            {imagePreviews.length === 0 && (
+              <label className="flex flex-col items-center gap-2 rounded-xl border-2 border-dashed border-[var(--border)] py-6 cursor-pointer hover:bg-[var(--muted)] transition-colors">
+                <ImagePlus className="h-6 w-6 text-[var(--muted-foreground)]" />
+                <span className="text-sm text-[var(--muted-foreground)]">Agregar fotos</span>
+                <input type="file" accept="image/*" multiple className="hidden" onChange={handleImageChange} />
+              </label>
+            )}
           </div>
 
           {/* Visibilidad */}

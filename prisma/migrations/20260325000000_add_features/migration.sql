@@ -23,3 +23,10 @@ ALTER TABLE "GemachRequest" ADD CONSTRAINT "GemachRequest_requesterId_fkey" FORE
 
 -- AddForeignKey
 ALTER TABLE "GemachRequest" ADD CONSTRAINT "GemachRequest_gemachId_fkey" FOREIGN KEY ("gemachId") REFERENCES "Gemach"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AlterTable: Item - replace imageUrl with imageUrls array, add date range
+ALTER TABLE "Item" ADD COLUMN IF NOT EXISTS "imageUrls" TEXT[] NOT NULL DEFAULT '{}';
+ALTER TABLE "Item" ADD COLUMN IF NOT EXISTS "availableFrom" TIMESTAMP(3);
+ALTER TABLE "Item" ADD COLUMN IF NOT EXISTS "availableTo" TIMESTAMP(3);
+UPDATE "Item" SET "imageUrls" = ARRAY["imageUrl"] WHERE "imageUrl" IS NOT NULL;
+ALTER TABLE "Item" DROP COLUMN IF EXISTS "imageUrl";
