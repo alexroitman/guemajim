@@ -11,12 +11,14 @@ async function getSession(req: NextRequest) {
     const hasCookie = cookie.includes("authjs.session-token");
     const secretPresent = !!process.env.AUTH_SECRET;
     console.log("[proxy] secureCookie:", secureCookie, "hasCookie:", hasCookie, "secretPresent:", secretPresent, "url:", req.url.slice(0, 30));
-    const token = await getToken({
+    const tokenPromise = getToken({
       req,
       secret: process.env.AUTH_SECRET!,
       secureCookie,
     });
-    console.log("[proxy] token:", token ? "found" : "null");
+    const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 2000));
+    const token = await Promise.race([tokenPromise, timeoutPromise]);
+    console.log("[proxy] token:", token ? "found" : (token === null ? "null(timeout?)" : "undefined"));
     return token as { role?: string; status?: string } | null;
   } catch (e) {
     console.log("[proxy] error:", String(e));
