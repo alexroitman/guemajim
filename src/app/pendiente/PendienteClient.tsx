@@ -9,6 +9,12 @@ function PendienteContent() {
   const router = useRouter();
 
   useEffect(() => {
+    if (session?.user?.status === "APPROVED") {
+      router.push("/");
+      router.refresh();
+      return;
+    }
+
     const interval = setInterval(async () => {
       const updated = await update();
       if (updated?.user?.status === "APPROVED") {
@@ -17,7 +23,7 @@ function PendienteContent() {
       }
     }, 5000);
     return () => clearInterval(interval);
-  }, [update, router]);
+  }, [session, update, router]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[var(--background)] px-4">
