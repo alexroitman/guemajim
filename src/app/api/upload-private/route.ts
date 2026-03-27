@@ -7,7 +7,8 @@ export async function POST(req: NextRequest) {
   if (!file) return NextResponse.json({ error: "No file" }, { status: 400 });
 
   try {
-    const blob = await put(file.name, file, { access: "private" });
+    const randomName = `dni/${crypto.randomUUID()}-${file.name}`;
+    const blob = await put(randomName, file, { access: "public" });
     return NextResponse.json({ url: blob.url });
   } catch (err) {
     console.error("[upload-private] Error al subir a Vercel Blob:", err);
