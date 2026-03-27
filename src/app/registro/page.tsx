@@ -48,6 +48,7 @@ export default function RegistroPage() {
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    const form = e.currentTarget;
     setError("");
     if (!communityId) {
       setError("Seleccioná tu comunidad.");
@@ -75,8 +76,6 @@ export default function RegistroPage() {
     } catch {
       // If upload fails, proceed without image — don't block registration
     }
-
-    const form = e.currentTarget;
     const body = {
       name: (form.elements.namedItem("name") as HTMLInputElement).value,
       email: (form.elements.namedItem("email") as HTMLInputElement).value,
