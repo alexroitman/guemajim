@@ -87,20 +87,25 @@ export default function RegistroPage() {
       dniImageUrl,
     };
 
-    const res = await fetch("/api/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
+    try {
+      const res = await fetch("/api/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
 
-    const data = await res.json();
-    if (!res.ok) {
-      setError(data.error || "Error al registrarse.");
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "Error al registrarse.");
+        return;
+      }
+
+      router.push("/pendiente");
+    } catch {
+      setError("Error de conexión. Intentá de nuevo.");
+    } finally {
       setLoading(false);
-      return;
     }
-
-    router.push("/pendiente");
   }
 
   return (

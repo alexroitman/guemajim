@@ -85,6 +85,19 @@ export function Navbar({ isAdmin }: NavbarProps) {
       {/* Header — visible en mobile y desktop */}
       <header className="sticky top-0 z-40 w-full border-b border-[var(--border)] bg-white/90 backdrop-blur-sm">
         <div className="mx-auto flex w-full max-w-5xl items-center justify-between px-4 py-3 md:px-6">
+          {/* Mobile: hamburger a la izquierda */}
+          <div className="flex md:hidden items-center">
+            <button
+              onClick={() => setMenuOpen(true)}
+              className="flex items-center justify-center rounded-xl p-2.5 text-[var(--foreground)] hover:bg-[var(--muted)] active:bg-[var(--muted)] transition-colors touch-manipulation"
+              aria-label="Abrir menú"
+              aria-expanded={menuOpen}
+              aria-controls="mobile-drawer"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+          </div>
+
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
             <span className="text-xl md:text-2xl">🕍</span>
@@ -158,7 +171,7 @@ export function Navbar({ isAdmin }: NavbarProps) {
             Salir
           </button>
 
-          {/* Mobile: iconos de acción + hamburger */}
+          {/* Mobile: iconos de acción a la derecha */}
           <div className="flex md:hidden items-center gap-1">
             {isApprovedUser && (
               <Link
@@ -183,15 +196,6 @@ export function Navbar({ isAdmin }: NavbarProps) {
                 Admin
               </Link>
             )}
-            <button
-              onClick={() => setMenuOpen(true)}
-              className="flex items-center justify-center rounded-xl p-2.5 text-[var(--foreground)] hover:bg-[var(--muted)] active:bg-[var(--muted)] transition-colors touch-manipulation"
-              aria-label="Abrir menú"
-              aria-expanded={menuOpen}
-              aria-controls="mobile-drawer"
-            >
-              <Menu className="h-5 w-5" />
-            </button>
           </div>
         </div>
       </header>
@@ -213,10 +217,10 @@ export function Navbar({ isAdmin }: NavbarProps) {
         aria-modal="true"
         aria-label="Menú de navegación"
         className={cn(
-          "fixed top-0 right-0 z-50 h-dvh w-72 max-w-[85vw] bg-white shadow-2xl md:hidden",
+          "fixed top-0 left-0 z-50 h-dvh w-72 max-w-[85vw] bg-white shadow-2xl md:hidden",
           "flex flex-col",
           "transform transition-transform duration-300 ease-in-out",
-          menuOpen ? "translate-x-0" : "translate-x-full"
+          menuOpen ? "translate-x-0" : "-translate-x-full"
         )}
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
