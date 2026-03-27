@@ -65,7 +65,7 @@ export default function RegistroPage() {
     try {
       const formData = new FormData();
       formData.append("file", dniFile);
-      const uploadRes = await fetch("/api/upload", {
+      const uploadRes = await fetch("/api/upload-private", {
         method: "POST",
         body: formData,
       });
