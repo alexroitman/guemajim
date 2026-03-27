@@ -1,10 +1,10 @@
 "use client";
 
-import { useSession } from "next-auth/react";
+import { SessionProvider, useSession } from "next-auth/react";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-export default function PendienteClient() {
+function PendienteContent() {
   const { data: session, update } = useSession();
   const router = useRouter();
 
@@ -36,5 +36,13 @@ export default function PendienteClient() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function PendienteClient() {
+  return (
+    <SessionProvider>
+      <PendienteContent />
+    </SessionProvider>
   );
 }
