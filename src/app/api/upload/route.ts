@@ -5,15 +5,17 @@ export async function POST(req: NextRequest) {
   const file = form.get("file") as File;
   if (!file) return NextResponse.json({ error: "No file" }, { status: 400 });
 
-  // In production with BLOB_READ_WRITE_TOKEN configured, use @vercel/blob
+  if (!process.env.BLOB_READ_WRITE_TOKEN) {
+    console.error("[upload] BLOB_READ_WRITE_TOKEN no está configurado");
+    return NextResponse.json({ error: "Almacenamiento no configurado" }, { status: 500 });
+  }
+
   try {
     const { put } = await import("@vercel/blob");
     const blob = await put(file.name, file, { access: "public" });
     return NextResponse.json({ url: blob.url });
-  } catch {
-    // Fallback for local dev when BLOB_READ_WRITE_TOKEN is not set
-    // Return a placeholder URL so the registration flow still works locally
-    const placeholderUrl = `https://placeholder.blob.vercel-storage.com/${Date.now()}-${file.name}`;
-    return NextResponse.json({ url: placeholderUrl });
+  } catch (err) {
+    console.error("[upload] Error al subir a Vercel Blob:", err);
+    return NextResponse.json({ error: "Error al subir archivo" }, { status: 500 });
   }
 }
