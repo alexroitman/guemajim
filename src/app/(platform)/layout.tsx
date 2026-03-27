@@ -14,7 +14,7 @@ export default async function PlatformLayout({
     <SessionProvider>
       <div className="flex flex-col min-h-screen">
         <Navbar isAdmin={isAdmin} />
-        <main className="flex-1 mx-auto w-full max-w-5xl px-4 py-6 pb-24 md:pb-6">
+        <main className="flex-1 mx-auto w-full max-w-5xl px-4 py-6" style={{ paddingBottom: "max(1.5rem, env(safe-area-inset-bottom))" }}>
           {children}
         </main>
       </div>
